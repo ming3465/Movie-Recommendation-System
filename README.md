@@ -14,6 +14,7 @@ mean-centered weighted average of neighbor ratings. Benchmarked on
 - Sparse CSR storage with user-major and item-major views
 - Custom thread pool with RAII locking and futures; parallel similarity matrix
 - Seeded train/test split for reproducible evaluation
+- Interactive search-and-recommend REPL (`-i`) - type a movie name, get neighbors
 - doctest unit tests for every module; `ctest` integration via CMake
 - `.clang-format` configured (LLVM, 100-col)
 
@@ -50,6 +51,45 @@ Sweep all (mode, metric) combinations and print a Markdown results table:
 ./build/bench_movielens100k
 ```
 
+### Interactive mode
+
+Search for a movie by name (case-insensitive substring match) and get the
+top 10 most similar films. Forces item-item similarity since "similar movies"
+is naturally an item-side question.
+
+```
+./build/recsys_cli --dataset data/ml-100k/u.data --interactive
+```
+
+At the `Search>` prompt, type any movie name. The REPL prints matching
+titles, then the top 10 similar films (with similarity scores) for the
+first match. Quit with `/quit`, `/q`, or Ctrl+Z then Enter (Windows) /
+Ctrl+D (Linux).
+
+Example session:
+
+```
+Search> star wars
+  Matched 1 title; showing 1:
+    [1] Star Wars (1977)
+
+  Top 10 movies similar to "Star Wars (1977)":
+    1. Return of the Jedi (1983)         (sim=0.727)
+    2. Raiders of the Lost Ark (1981)    (sim=0.634)
+    3. Independence Day (ID4) (1996)     (sim=0.581)
+    4. Empire Strikes Back, The (1980)   (sim=0.579)
+    5. Toy Story (1995)                  (sim=0.577)
+    6. Godfather, The (1972)             (sim=0.556)
+    7. Indiana Jones and the Last Crusade (1989)  (sim=0.546)
+    8. Fargo (1996)                      (sim=0.541)
+    9. E.T. the Extra-Terrestrial (1982) (sim=0.532)
+    10. Alien (1979)                     (sim=0.525)
+```
+
+Note: MovieLens 100K's catalog ends in early 1998, so "Avengers" and other
+modern films aren't there. Try `star wars`, `toy story`, `pulp fiction`,
+`godfather`, `titanic`, `fargo`, `jurassic park`.
+
 Tests:
 
 ```
@@ -61,9 +101,11 @@ ctest --test-dir build --output-on-failure
 | Flag                         | Default     | Description                            |
 |------------------------------|-------------|----------------------------------------|
 | `--dataset PATH`             | (required)  | MovieLens 100K `u.data` file           |
+| `--items PATH`               | sibling of `--dataset` | `u.item` titles file (used by `-i`) |
 | `-k, --k INT`                | 30          | Number of nearest neighbors            |
 | `-s, --similarity NAME`      | cosine      | `cosine` / `pearson` / `adjusted_cosine` |
 | `-m, --mode NAME`            | ubcf        | `ubcf` (user-based) / `ibcf` (item-based) |
+| `-i, --interactive`          | off         | Drop into search-and-recommend REPL (forces IBCF) |
 | `-o, --output PATH`          | (none)      | Write predictions CSV here             |
 | `--test-fraction FLOAT`      | 0.2         | Held-out fraction of ratings           |
 | `--seed UINT`                | 42          | RNG seed for the train/test split      |

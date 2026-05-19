@@ -8,7 +8,9 @@
 #include "recsys/similarity.hpp"
 
 using recsys::SparseVector;
+using recsys::similarity::adjusted_cosine;
 using recsys::similarity::cosine;
+using recsys::similarity::pearson;
 
 namespace {
 
@@ -76,4 +78,58 @@ TEST_CASE("cosine: empty or zero-norm input yields 0") {
     std::vector<float> zeros = {0.0f};
     auto zero_v = make_view(idx, zeros);
     CHECK(cosine(zero_v, v) == doctest::Approx(0.0f));
+}
+
+TEST_CASE("pearson: perfectly co-varying vectors give 1.0") {
+    // Over the overlap (indices 0,1,2), b = 2*a, so they co-vary perfectly.
+    std::vector<std::int32_t> ai = {0, 1, 2};
+    std::vector<float> av = {1.0f, 2.0f, 3.0f};
+    std::vector<std::int32_t> bi = {0, 1, 2};
+    std::vector<float> bv = {2.0f, 4.0f, 6.0f};
+    const float mean_a = 2.0f;
+    const float mean_b = 4.0f;
+    CHECK(pearson(make_view(ai, av), mean_a, make_view(bi, bv), mean_b) ==
+          doctest::Approx(1.0f));
+}
+
+TEST_CASE("pearson: perfectly anti-correlated vectors give -1.0") {
+    std::vector<std::int32_t> ai = {0, 1, 2};
+    std::vector<float> av = {1.0f, 2.0f, 3.0f};
+    std::vector<std::int32_t> bi = {0, 1, 2};
+    std::vector<float> bv = {3.0f, 2.0f, 1.0f};
+    CHECK(pearson(make_view(ai, av), 2.0f, make_view(bi, bv), 2.0f) ==
+          doctest::Approx(-1.0f));
+}
+
+TEST_CASE("pearson: empty intersection or constant vector yields 0") {
+    std::vector<std::int32_t> ai = {0, 1};
+    std::vector<float> av = {1.0f, 2.0f};
+    std::vector<std::int32_t> bi = {5, 6};
+    std::vector<float> bv = {3.0f, 4.0f};
+    CHECK(pearson(make_view(ai, av), 1.5f, make_view(bi, bv), 3.5f) ==
+          doctest::Approx(0.0f));
+
+    // Same index, but a is constant on the intersection -> sum_sq = 0.
+    std::vector<std::int32_t> ci = {0, 1};
+    std::vector<float> cv = {2.0f, 2.0f};
+    CHECK(pearson(make_view(ci, cv), 2.0f, make_view(ai, av), 1.5f) ==
+          doctest::Approx(0.0f));
+}
+
+TEST_CASE("adjusted_cosine: centers by per-index mean (user-mean for items)") {
+    // Two item vectors indexed by user. Users 0..2 have means stored at
+    // mean_per_index[0..2]. After subtracting user means, the items are
+    // perfectly co-varying -> sim = 1.0.
+    std::vector<float> user_means = {3.0f, 2.0f, 4.0f};
+    std::vector<std::int32_t> ai = {0, 1, 2};
+    std::vector<float> av = {4.0f, 3.0f, 5.0f};       // centered: +1, +1, +1
+    std::vector<std::int32_t> bi = {0, 1, 2};
+    std::vector<float> bv = {5.0f, 4.0f, 6.0f};       // centered: +2, +2, +2
+    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv),
+                          user_means.data()) == doctest::Approx(1.0f));
+
+    // Flip the sign of b's deviations -> anti-correlation.
+    std::vector<float> bv_anti = {1.0f, 0.0f, 2.0f};  // centered: -2, -2, -2
+    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv_anti),
+                          user_means.data()) == doctest::Approx(-1.0f));
 }

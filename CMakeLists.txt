@@ -42,6 +42,7 @@ endif()
 
 add_library(recsys STATIC
     src/dataset.cpp
+    src/ratings_table.cpp
 )
 target_compile_features(recsys PUBLIC cxx_std_17)
 target_include_directories(recsys PUBLIC
@@ -77,3 +78,17 @@ add_custom_target(download_movielens_100k
 enable_testing()
 list(APPEND CMAKE_MODULE_PATH ${doctest_SOURCE_DIR}/scripts/cmake)
 include(doctest)
+
+# Helper: declare a test executable linked to recsys + doctest, and register
+# every TEST_CASE inside it as an individual CTest entry.
+function(recsys_add_test name source)
+    add_executable(${name} ${source})
+    target_link_libraries(${name} PRIVATE recsys doctest::doctest recsys_warnings)
+    target_compile_features(${name} PRIVATE cxx_std_17)
+    if(MINGW)
+        target_link_options(${name} PRIVATE -static -static-libgcc -static-libstdc++)
+    endif()
+    doctest_discover_tests(${name})
+endfunction()
+
+recsys_add_test(test_ratings_table tests/test_ratings_table.cpp)

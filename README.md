@@ -1,5 +1,4 @@
 # Movie Recommendation System
-
 [![ci](https://github.com/ming3465/Movie-Recommendation-System/actions/workflows/ci.yml/badge.svg)](https://github.com/ming3465/Movie-Recommendation-System/actions/workflows/ci.yml)
 
 A C++17 collaborative-filtering movie recommender. Builds a k-nearest-neighbors

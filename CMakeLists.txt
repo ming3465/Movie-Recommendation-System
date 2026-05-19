@@ -47,6 +47,7 @@ add_library(recsys STATIC
     src/similarity.cpp
     src/similarity_matrix.cpp
     src/recommender.cpp
+    src/evaluator.cpp
 )
 target_compile_features(recsys PUBLIC cxx_std_17)
 target_include_directories(recsys PUBLIC
@@ -64,6 +65,15 @@ target_link_libraries(recsys_cli PRIVATE recsys CLI11::CLI11 recsys_warnings)
 # MSYS2 bin dir on PATH.
 if(MINGW)
     target_link_options(recsys_cli PRIVATE -static -static-libgcc -static-libstdc++)
+endif()
+
+# --- Benchmark binary --------------------------------------------------------
+
+add_executable(bench_movielens100k benchmarks/bench_movielens100k.cpp)
+target_compile_features(bench_movielens100k PRIVATE cxx_std_17)
+target_link_libraries(bench_movielens100k PRIVATE recsys CLI11::CLI11 recsys_warnings)
+if(MINGW)
+    target_link_options(bench_movielens100k PRIVATE -static -static-libgcc -static-libstdc++)
 endif()
 
 # --- MovieLens 100K download target ------------------------------------------
@@ -100,3 +110,4 @@ recsys_add_test(test_thread_pool tests/test_thread_pool.cpp)
 recsys_add_test(test_similarity tests/test_similarity.cpp)
 recsys_add_test(test_similarity_matrix tests/test_similarity_matrix.cpp)
 recsys_add_test(test_recommender tests/test_recommender.cpp)
+recsys_add_test(test_evaluator tests/test_evaluator.cpp)

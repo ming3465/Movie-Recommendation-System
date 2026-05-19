@@ -38,19 +38,39 @@ else()
     target_compile_options(recsys_warnings INTERFACE -Wall -Wextra -Wpedantic)
 endif()
 
+# --- recsys library ----------------------------------------------------------
+
+add_library(recsys STATIC
+    src/dataset.cpp
+)
+target_compile_features(recsys PUBLIC cxx_std_17)
+target_include_directories(recsys PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+target_link_libraries(recsys PRIVATE recsys_warnings)
+
 # --- CLI executable ----------------------------------------------------------
-# The recsys static library will be added once real modules land; for now the
-# CLI only depends on CLI11.
 
 add_executable(recsys_cli apps/recsys_cli.cpp)
 target_compile_features(recsys_cli PRIVATE cxx_std_17)
-target_link_libraries(recsys_cli PRIVATE CLI11::CLI11 recsys_warnings)
+target_link_libraries(recsys_cli PRIVATE recsys CLI11::CLI11 recsys_warnings)
 
 # Statically link the GCC runtime on MinGW so the binary runs without the
 # MSYS2 bin dir on PATH.
 if(MINGW)
     target_link_options(recsys_cli PRIVATE -static -static-libgcc -static-libstdc++)
 endif()
+
+# --- MovieLens 100K download target ------------------------------------------
+# Run with: cmake --build build --target download_movielens_100k
+
+add_custom_target(download_movielens_100k
+    COMMAND ${CMAKE_COMMAND}
+        -DDEST=${CMAKE_SOURCE_DIR}/data
+        -P ${CMAKE_SOURCE_DIR}/cmake/DownloadMovieLens.cmake
+    COMMENT "Downloading MovieLens 100K into data/"
+    VERBATIM
+)
 
 # --- Testing -----------------------------------------------------------------
 

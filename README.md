@@ -21,7 +21,7 @@ mean-centered weighted average of neighbor ratings. Benchmarked on
 ## Requirements
 
 - CMake >= 3.14
-- A C++17 compiler (MSVC 2019+, GCC 8+, or Clang 7+)
+- C++17 
 - Network access on first configure (CMake fetches `doctest` and `CLI11`)
 
 ## Build

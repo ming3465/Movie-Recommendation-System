@@ -7,6 +7,7 @@
 #include "recsys/recommender.hpp"
 #include "recsys/similarity_matrix.hpp"
 
+using recsys::ItemKNN;
 using recsys::Rating;
 using recsys::RatingsTable;
 using recsys::SimilarityMatrix;
@@ -88,4 +89,45 @@ TEST_CASE("UserKNN.predict: k=0 always returns user mean") {
     sim.set(0, 1, 1.0f);
     UserKNN model(rt, sim, /*k=*/0);
     CHECK(model.predict(0, 1) == doctest::Approx(rt.user_mean(0)));
+}
+
+TEST_CASE("ItemKNN.predict: mean-centered weighted average mirrors the UBCF case") {
+    // Item 100 (idx 0): users 1,2 -> 5,4; mean = 4.5
+    // Item 101 (idx 1): users 1,2 -> 4,3; mean = 3.5
+    // Item 102 (idx 2): user 1   -> 2;    mean = 2.0
+    std::vector<Rating> raw = {
+        {1, 100, 5.0f}, {2, 100, 4.0f},
+        {1, 101, 4.0f}, {2, 101, 3.0f},
+        {1, 102, 2.0f},
+    };
+    RatingsTable rt(raw);
+    REQUIRE(rt.num_users() == 2);
+    REQUIRE(rt.num_items() == 3);
+
+    SimilarityMatrix sim(3);
+    sim.set(2, 0, 1.0f);  // sim(item 102, item 100)
+    sim.set(2, 1, 1.0f);  // sim(item 102, item 101)
+
+    ItemKNN model(rt, sim, /*k=*/2);
+    // Predict user 2's rating for item 102:
+    //   user 2 has rated items 100, 101 with values 4, 3.
+    //   deviations from item means: 4 - 4.5 = -0.5; 3 - 3.5 = -0.5.
+    //   predicted = 2.0 + (1*-0.5 + 1*-0.5) / (1 + 1) = 1.5.
+    CHECK(model.predict(/*user=*/1, /*item=*/2) == doctest::Approx(1.5f));
+}
+
+TEST_CASE("ItemKNN.predict: cold user (no ratings) returns item mean") {
+    // Create 2 users; predict for a user with zero overlap.
+    std::vector<Rating> raw = {
+        {1, 100, 5.0f}, {1, 101, 4.0f}, {1, 102, 3.0f},
+        {2, 999, 2.0f},  // user 2 only rated unrelated item 999
+    };
+    RatingsTable rt(raw);
+    SimilarityMatrix sim(rt.num_items());
+    sim.set(0, 1, 1.0f);  // arbitrary, irrelevant
+    ItemKNN model(rt, sim, 5);
+
+    // Predict user 2 (idx 1) for item 101 (idx 1):
+    //   user 2's only rated item is 999 (idx 3); sim(item 101, item 999) = 0 -> fallback.
+    CHECK(model.predict(1, 1) == doctest::Approx(rt.item_mean(1)));
 }

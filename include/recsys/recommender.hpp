@@ -28,4 +28,23 @@ private:
     int k_;
 };
 
+// Item-based k-NN. Mirrors UserKNN, indexing on item similarity:
+//
+//     predicted(u, i) = mean(i) + sum_{j in top-k items rated by u}
+//                                   sim(i, j) * (r(u, j) - mean(j))
+//                                 / sum_{j in top-k}  |sim(i, j)|
+//
+// Falls back to mean(i) when no usable neighbor exists.
+class ItemKNN {
+public:
+    ItemKNN(const RatingsTable& rt, const SimilarityMatrix& item_sim, int k);
+
+    float predict(std::int32_t user_idx, std::int32_t item_idx) const;
+
+private:
+    const RatingsTable& rt_;
+    const SimilarityMatrix& sim_;
+    int k_;
+};
+
 }  // namespace recsys

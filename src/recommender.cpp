@@ -52,4 +52,38 @@ float UserKNN::predict(std::int32_t user_idx, std::int32_t item_idx) const {
     return user_mean + num / denom;
 }
 
+ItemKNN::ItemKNN(const RatingsTable& rt, const SimilarityMatrix& item_sim, int k)
+    : rt_(rt), sim_(item_sim), k_(k) {}
+
+float ItemKNN::predict(std::int32_t user_idx, std::int32_t item_idx) const {
+    const float item_mean = rt_.item_mean(item_idx);
+
+    const auto rated = rt_.ratings_by_user(user_idx);
+    if (rated.count == 0 || k_ <= 0) return item_mean;
+
+    std::vector<Neighbor> cand;
+    cand.reserve(rated.count);
+    for (std::size_t i = 0; i < rated.count; ++i) {
+        const std::int32_t j = rated.items[i];
+        if (j == item_idx) continue;
+        const float s = sim_.at(item_idx, j);
+        if (s == 0.0f) continue;
+        cand.push_back({s, rated.values[i] - rt_.item_mean(j)});
+    }
+    if (cand.empty()) return item_mean;
+
+    const std::size_t k = std::min(static_cast<std::size_t>(k_), cand.size());
+    std::partial_sort(
+        cand.begin(), cand.begin() + static_cast<std::ptrdiff_t>(k), cand.end(),
+        [](const Neighbor& a, const Neighbor& b) { return a.sim > b.sim; });
+
+    float num = 0.0f, denom = 0.0f;
+    for (std::size_t i = 0; i < k; ++i) {
+        num += cand[i].sim * cand[i].deviation;
+        denom += std::fabs(cand[i].sim);
+    }
+    if (denom <= 0.0f) return item_mean;
+    return item_mean + num / denom;
+}
+
 }  // namespace recsys

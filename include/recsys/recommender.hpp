@@ -47,4 +47,4 @@ private:
     int k_;
 };
 
-}  // namespace recsys
+} // namespace recsys

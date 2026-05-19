@@ -6,7 +6,8 @@
 namespace recsys::similarity {
 
 float cosine(const SparseVector& a, const SparseVector& b) {
-    if (a.count == 0 || b.count == 0) return 0.0f;
+    if (a.count == 0 || b.count == 0)
+        return 0.0f;
 
     float norm_a_sq = 0.0f;
     for (std::size_t i = 0; i < a.count; ++i) {
@@ -16,7 +17,8 @@ float cosine(const SparseVector& a, const SparseVector& b) {
     for (std::size_t i = 0; i < b.count; ++i) {
         norm_b_sq += b.values[i] * b.values[i];
     }
-    if (norm_a_sq <= 0.0f || norm_b_sq <= 0.0f) return 0.0f;
+    if (norm_a_sq <= 0.0f || norm_b_sq <= 0.0f)
+        return 0.0f;
 
     // Dot product on (possibly unsorted) sparse indices: hash the shorter
     // vector, then probe with entries from the longer one.
@@ -52,11 +54,11 @@ std::unordered_map<std::int32_t, float> index_map(const SparseVector& v) {
     return m;
 }
 
-}  // namespace
+} // namespace
 
-float pearson(const SparseVector& a, float mean_a,
-              const SparseVector& b, float mean_b) {
-    if (a.count == 0 || b.count == 0) return 0.0f;
+float pearson(const SparseVector& a, float mean_a, const SparseVector& b, float mean_b) {
+    if (a.count == 0 || b.count == 0)
+        return 0.0f;
 
     const SparseVector& shorter = (a.count <= b.count) ? a : b;
     const SparseVector& longer = (a.count <= b.count) ? b : a;
@@ -68,20 +70,22 @@ float pearson(const SparseVector& a, float mean_a,
     float num = 0.0f, sum_sq_s = 0.0f, sum_sq_l = 0.0f;
     for (std::size_t i = 0; i < longer.count; ++i) {
         const auto it = lookup.find(longer.indices[i]);
-        if (it == lookup.end()) continue;
+        if (it == lookup.end())
+            continue;
         const float ds = it->second - mean_s;
         const float dl = longer.values[i] - mean_l;
         num += ds * dl;
         sum_sq_s += ds * ds;
         sum_sq_l += dl * dl;
     }
-    if (sum_sq_s <= 0.0f || sum_sq_l <= 0.0f) return 0.0f;
+    if (sum_sq_s <= 0.0f || sum_sq_l <= 0.0f)
+        return 0.0f;
     return num / std::sqrt(sum_sq_s * sum_sq_l);
 }
 
-float adjusted_cosine(const SparseVector& a, const SparseVector& b,
-                      const float* mean_per_index) {
-    if (a.count == 0 || b.count == 0) return 0.0f;
+float adjusted_cosine(const SparseVector& a, const SparseVector& b, const float* mean_per_index) {
+    if (a.count == 0 || b.count == 0)
+        return 0.0f;
 
     const SparseVector& shorter = (a.count <= b.count) ? a : b;
     const SparseVector& longer = (a.count <= b.count) ? b : a;
@@ -92,7 +96,8 @@ float adjusted_cosine(const SparseVector& a, const SparseVector& b,
     for (std::size_t i = 0; i < longer.count; ++i) {
         const auto idx = longer.indices[i];
         const auto it = lookup.find(idx);
-        if (it == lookup.end()) continue;
+        if (it == lookup.end())
+            continue;
         const float m = mean_per_index[idx];
         const float ds = it->second - m;
         const float dl = longer.values[i] - m;
@@ -100,8 +105,9 @@ float adjusted_cosine(const SparseVector& a, const SparseVector& b,
         sum_sq_s += ds * ds;
         sum_sq_l += dl * dl;
     }
-    if (sum_sq_s <= 0.0f || sum_sq_l <= 0.0f) return 0.0f;
+    if (sum_sq_s <= 0.0f || sum_sq_l <= 0.0f)
+        return 0.0f;
     return num / std::sqrt(sum_sq_s * sum_sq_l);
 }
 
-}  // namespace recsys::similarity
+} // namespace recsys::similarity

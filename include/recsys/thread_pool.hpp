@@ -29,11 +29,12 @@ public:
     ThreadPool(ThreadPool&&) = delete;
     ThreadPool& operator=(ThreadPool&&) = delete;
 
-    std::size_t size() const noexcept { return workers_.size(); }
+    std::size_t size() const noexcept {
+        return workers_.size();
+    }
 
     template <typename F, typename... Args>
-    auto submit(F&& f, Args&&... args)
-        -> std::future<std::invoke_result_t<F, Args...>> {
+    auto submit(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>> {
         using R = std::invoke_result_t<F, Args...>;
         auto task = std::make_shared<std::packaged_task<R()>>(
             std::bind(std::forward<F>(f), std::forward<Args>(args)...));
@@ -52,8 +53,7 @@ public:
     // Partition [0, n) across workers and call body(begin, end) on each
     // chunk in parallel. Blocks until every chunk finishes. If any chunk
     // throws, the first exception is rethrown after all chunks settle.
-    void parallel_for(std::size_t n,
-                      const std::function<void(std::size_t, std::size_t)>& body);
+    void parallel_for(std::size_t n, const std::function<void(std::size_t, std::size_t)>& body);
 
 private:
     void worker_loop();
@@ -65,4 +65,4 @@ private:
     bool stop_ = false;
 };
 
-}  // namespace recsys
+} // namespace recsys

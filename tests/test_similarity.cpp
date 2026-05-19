@@ -14,12 +14,11 @@ using recsys::similarity::pearson;
 
 namespace {
 
-SparseVector make_view(const std::vector<std::int32_t>& idx,
-                       const std::vector<float>& val) {
+SparseVector make_view(const std::vector<std::int32_t>& idx, const std::vector<float>& val) {
     return SparseVector{idx.data(), val.data(), idx.size()};
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("cosine: identical vectors give 1.0") {
     std::vector<std::int32_t> idx = {1, 3, 5};
@@ -47,8 +46,7 @@ TEST_CASE("cosine: known closed-form value on hand-computed example") {
     std::vector<std::int32_t> bi = {1, 2, 3};
     std::vector<float> bv = {2.0f, 3.0f, 4.0f};
     const float expected = 20.0f / std::sqrt(21.0f * 29.0f);
-    CHECK(cosine(make_view(ai, av), make_view(bi, bv)) ==
-          doctest::Approx(expected));
+    CHECK(cosine(make_view(ai, av), make_view(bi, bv)) == doctest::Approx(expected));
 }
 
 TEST_CASE("cosine: unsorted indices produce the same result as sorted") {
@@ -88,8 +86,7 @@ TEST_CASE("pearson: perfectly co-varying vectors give 1.0") {
     std::vector<float> bv = {2.0f, 4.0f, 6.0f};
     const float mean_a = 2.0f;
     const float mean_b = 4.0f;
-    CHECK(pearson(make_view(ai, av), mean_a, make_view(bi, bv), mean_b) ==
-          doctest::Approx(1.0f));
+    CHECK(pearson(make_view(ai, av), mean_a, make_view(bi, bv), mean_b) == doctest::Approx(1.0f));
 }
 
 TEST_CASE("pearson: perfectly anti-correlated vectors give -1.0") {
@@ -97,8 +94,7 @@ TEST_CASE("pearson: perfectly anti-correlated vectors give -1.0") {
     std::vector<float> av = {1.0f, 2.0f, 3.0f};
     std::vector<std::int32_t> bi = {0, 1, 2};
     std::vector<float> bv = {3.0f, 2.0f, 1.0f};
-    CHECK(pearson(make_view(ai, av), 2.0f, make_view(bi, bv), 2.0f) ==
-          doctest::Approx(-1.0f));
+    CHECK(pearson(make_view(ai, av), 2.0f, make_view(bi, bv), 2.0f) == doctest::Approx(-1.0f));
 }
 
 TEST_CASE("pearson: empty intersection or constant vector yields 0") {
@@ -106,14 +102,12 @@ TEST_CASE("pearson: empty intersection or constant vector yields 0") {
     std::vector<float> av = {1.0f, 2.0f};
     std::vector<std::int32_t> bi = {5, 6};
     std::vector<float> bv = {3.0f, 4.0f};
-    CHECK(pearson(make_view(ai, av), 1.5f, make_view(bi, bv), 3.5f) ==
-          doctest::Approx(0.0f));
+    CHECK(pearson(make_view(ai, av), 1.5f, make_view(bi, bv), 3.5f) == doctest::Approx(0.0f));
 
     // Same index, but a is constant on the intersection -> sum_sq = 0.
     std::vector<std::int32_t> ci = {0, 1};
     std::vector<float> cv = {2.0f, 2.0f};
-    CHECK(pearson(make_view(ci, cv), 2.0f, make_view(ai, av), 1.5f) ==
-          doctest::Approx(0.0f));
+    CHECK(pearson(make_view(ci, cv), 2.0f, make_view(ai, av), 1.5f) == doctest::Approx(0.0f));
 }
 
 TEST_CASE("adjusted_cosine: centers by per-index mean (user-mean for items)") {
@@ -122,14 +116,14 @@ TEST_CASE("adjusted_cosine: centers by per-index mean (user-mean for items)") {
     // perfectly co-varying -> sim = 1.0.
     std::vector<float> user_means = {3.0f, 2.0f, 4.0f};
     std::vector<std::int32_t> ai = {0, 1, 2};
-    std::vector<float> av = {4.0f, 3.0f, 5.0f};       // centered: +1, +1, +1
+    std::vector<float> av = {4.0f, 3.0f, 5.0f}; // centered: +1, +1, +1
     std::vector<std::int32_t> bi = {0, 1, 2};
-    std::vector<float> bv = {5.0f, 4.0f, 6.0f};       // centered: +2, +2, +2
-    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv),
-                          user_means.data()) == doctest::Approx(1.0f));
+    std::vector<float> bv = {5.0f, 4.0f, 6.0f}; // centered: +2, +2, +2
+    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv), user_means.data()) ==
+          doctest::Approx(1.0f));
 
     // Flip the sign of b's deviations -> anti-correlation.
-    std::vector<float> bv_anti = {1.0f, 0.0f, 2.0f};  // centered: -2, -2, -2
-    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv_anti),
-                          user_means.data()) == doctest::Approx(-1.0f));
+    std::vector<float> bv_anti = {1.0f, 0.0f, 2.0f}; // centered: -2, -2, -2
+    CHECK(adjusted_cosine(make_view(ai, av), make_view(bi, bv_anti), user_means.data()) ==
+          doctest::Approx(-1.0f));
 }

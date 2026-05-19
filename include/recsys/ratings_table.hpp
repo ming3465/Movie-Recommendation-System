@@ -21,7 +21,9 @@ public:
     std::int32_t num_items() const noexcept {
         return static_cast<std::int32_t>(item_off_.size() - 1);
     }
-    std::size_t num_ratings() const noexcept { return user_items_.size(); }
+    std::size_t num_ratings() const noexcept {
+        return user_items_.size();
+    }
 
     // External id -> internal index; -1 if the id was never seen.
     std::int32_t user_index(std::int32_t ext_user_id) const;
@@ -48,9 +50,15 @@ public:
     float item_mean(std::int32_t item_idx) const noexcept {
         return item_means_[static_cast<std::size_t>(item_idx)];
     }
-    const float* user_means_data() const noexcept { return user_means_.data(); }
-    const float* item_means_data() const noexcept { return item_means_.data(); }
-    float global_mean() const noexcept { return global_mean_; }
+    const float* user_means_data() const noexcept {
+        return user_means_.data();
+    }
+    const float* item_means_data() const noexcept {
+        return item_means_.data();
+    }
+    float global_mean() const noexcept {
+        return global_mean_;
+    }
 
 private:
     std::vector<std::size_t> user_off_;
@@ -76,8 +84,6 @@ struct Split {
     std::vector<Rating> test;
 };
 
-Split train_test_split(const std::vector<Rating>& ratings,
-                       float test_fraction,
-                       std::uint64_t seed);
+Split train_test_split(const std::vector<Rating>& ratings, float test_fraction, std::uint64_t seed);
 
-}  // namespace recsys
+} // namespace recsys

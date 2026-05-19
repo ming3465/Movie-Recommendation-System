@@ -14,10 +14,7 @@ using recsys::train_test_split;
 TEST_CASE("RatingsTable: counts and means on a 4x3 toy matrix") {
     // Users 10, 20, 30, 40; items 1, 2, 3.
     std::vector<Rating> raw = {
-        {10, 1, 5.0f}, {10, 2, 3.0f},
-        {20, 1, 4.0f},
-        {30, 2, 2.0f}, {30, 3, 1.0f},
-        {40, 3, 5.0f},
+        {10, 1, 5.0f}, {10, 2, 3.0f}, {20, 1, 4.0f}, {30, 2, 2.0f}, {30, 3, 1.0f}, {40, 3, 5.0f},
     };
     RatingsTable t(raw);
 
@@ -32,21 +29,22 @@ TEST_CASE("RatingsTable: counts and means on a 4x3 toy matrix") {
     CHECK(t.item_index(1) == 0);
     CHECK(t.item_index(3) == 2);
 
-    CHECK(t.user_mean(0) == doctest::Approx(4.0f));  // (5+3)/2
-    CHECK(t.user_mean(1) == doctest::Approx(4.0f));  // 4
-    CHECK(t.user_mean(2) == doctest::Approx(1.5f));  // (2+1)/2
-    CHECK(t.user_mean(3) == doctest::Approx(5.0f));  // 5
+    CHECK(t.user_mean(0) == doctest::Approx(4.0f)); // (5+3)/2
+    CHECK(t.user_mean(1) == doctest::Approx(4.0f)); // 4
+    CHECK(t.user_mean(2) == doctest::Approx(1.5f)); // (2+1)/2
+    CHECK(t.user_mean(3) == doctest::Approx(5.0f)); // 5
 
-    CHECK(t.item_mean(0) == doctest::Approx(4.5f));  // (5+4)/2
-    CHECK(t.item_mean(1) == doctest::Approx(2.5f));  // (3+2)/2
-    CHECK(t.item_mean(2) == doctest::Approx(3.0f));  // (1+5)/2
+    CHECK(t.item_mean(0) == doctest::Approx(4.5f)); // (5+4)/2
+    CHECK(t.item_mean(1) == doctest::Approx(2.5f)); // (3+2)/2
+    CHECK(t.item_mean(2) == doctest::Approx(3.0f)); // (1+5)/2
 
     CHECK(t.global_mean() == doctest::Approx(20.0f / 6.0f));
 }
 
 TEST_CASE("RatingsTable: CSR slices expose every rating exactly once") {
     std::vector<Rating> raw = {
-        {10, 1, 5.0f}, {10, 2, 3.0f},
+        {10, 1, 5.0f},
+        {10, 2, 3.0f},
         {20, 1, 4.0f},
     };
     RatingsTable t(raw);
@@ -61,8 +59,9 @@ TEST_CASE("RatingsTable: CSR slices expose every rating exactly once") {
     auto i0 = t.ratings_by_item(0);
     REQUIRE(i0.count == 2);
     float sum = 0.0f;
-    for (std::size_t k = 0; k < i0.count; ++k) sum += i0.values[k];
-    CHECK(sum == doctest::Approx(9.0f));  // 5 + 4
+    for (std::size_t k = 0; k < i0.count; ++k)
+        sum += i0.values[k];
+    CHECK(sum == doctest::Approx(9.0f)); // 5 + 4
 }
 
 TEST_CASE("RatingsTable: out-of-range slice access throws") {
@@ -85,8 +84,7 @@ TEST_CASE("train_test_split: partitions all ratings, fraction in window, reprodu
     const auto s = train_test_split(raw, 0.2f, 42);
     CHECK(s.train.size() + s.test.size() == raw.size());
 
-    const float test_frac =
-        static_cast<float>(s.test.size()) / static_cast<float>(raw.size());
+    const float test_frac = static_cast<float>(s.test.size()) / static_cast<float>(raw.size());
     CHECK(test_frac > 0.17f);
     CHECK(test_frac < 0.23f);
 
@@ -103,8 +101,7 @@ TEST_CASE("train_test_split: partitions all ratings, fraction in window, reprodu
     bool any_different = false;
     const auto n = std::min(s.test.size(), s3.test.size());
     for (std::size_t k = 0; k < n; ++k) {
-        if (s.test[k].user_id != s3.test[k].user_id ||
-            s.test[k].item_id != s3.test[k].item_id) {
+        if (s.test[k].user_id != s3.test[k].user_id || s.test[k].item_id != s3.test[k].item_id) {
             any_different = true;
             break;
         }

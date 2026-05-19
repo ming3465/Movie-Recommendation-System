@@ -19,7 +19,9 @@ public:
     SimilarityMatrix() = default;
     explicit SimilarityMatrix(std::int32_t n);
 
-    std::int32_t size() const noexcept { return n_; }
+    std::int32_t size() const noexcept {
+        return n_;
+    }
 
     float at(std::int32_t i, std::int32_t j) const;
     void set(std::int32_t i, std::int32_t j, float value);
@@ -33,13 +35,9 @@ private:
 
 // Build the user-user similarity matrix for `rt` using `metric`. Per-pair
 // work is dispatched across `pool` via parallel_for.
-SimilarityMatrix build_user_similarity(const RatingsTable& rt,
-                                       Metric metric,
-                                       ThreadPool& pool);
+SimilarityMatrix build_user_similarity(const RatingsTable& rt, Metric metric, ThreadPool& pool);
 
 // Same, item-item.
-SimilarityMatrix build_item_similarity(const RatingsTable& rt,
-                                       Metric metric,
-                                       ThreadPool& pool);
+SimilarityMatrix build_item_similarity(const RatingsTable& rt, Metric metric, ThreadPool& pool);
 
-}  // namespace recsys
+} // namespace recsys

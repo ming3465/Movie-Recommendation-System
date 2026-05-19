@@ -18,9 +18,7 @@ TEST_CASE("UserKNN.predict: mean-centered weighted average on a hand-computed ca
     // user B (idx 1): item 100 -> 4, item 101 -> 3; mean = 3.5
     // user C (idx 2): item 100 -> 2;                mean = 2.0
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {1, 101, 4.0f},
-        {2, 100, 4.0f}, {2, 101, 3.0f},
-        {3, 100, 2.0f},
+        {1, 100, 5.0f}, {1, 101, 4.0f}, {2, 100, 4.0f}, {2, 101, 3.0f}, {3, 100, 2.0f},
     };
     RatingsTable rt(raw);
     REQUIRE(rt.num_users() == 3);
@@ -42,14 +40,12 @@ TEST_CASE("UserKNN.predict: mean-centered weighted average on a hand-computed ca
 TEST_CASE("UserKNN.predict: weights asymmetric neighbors correctly") {
     // Same setup, but make A much more similar to C than B is.
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {1, 101, 4.0f},
-        {2, 100, 4.0f}, {2, 101, 2.0f},
-        {3, 100, 2.0f},
+        {1, 100, 5.0f}, {1, 101, 4.0f}, {2, 100, 4.0f}, {2, 101, 2.0f}, {3, 100, 2.0f},
     };
     RatingsTable rt(raw);
     SimilarityMatrix sim(3);
-    sim.set(2, 0, 0.9f);  // sim(C, A)
-    sim.set(2, 1, 0.1f);  // sim(C, B)
+    sim.set(2, 0, 0.9f); // sim(C, A)
+    sim.set(2, 1, 0.1f); // sim(C, B)
 
     UserKNN model(rt, sim, 2);
     // user_mean(C) = 2.0
@@ -65,8 +61,9 @@ TEST_CASE("UserKNN.predict: cold item (nobody rated it) returns user mean") {
     // Build with 2 items, then ask about item index 1 in a fresh table
     // where only item 0 has a rater.
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {1, 101, 4.0f},  // user 0 rates both
-        {2, 100, 4.0f},                  // user 1 rates only item 100
+        {1, 100, 5.0f},
+        {1, 101, 4.0f}, // user 0 rates both
+        {2, 100, 4.0f}, // user 1 rates only item 100
     };
     RatingsTable rt(raw);
     SimilarityMatrix sim(rt.num_users());
@@ -81,8 +78,10 @@ TEST_CASE("UserKNN.predict: cold item (nobody rated it) returns user mean") {
 
 TEST_CASE("UserKNN.predict: k=0 always returns user mean") {
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {1, 101, 4.0f},
-        {2, 100, 4.0f}, {2, 101, 3.0f},
+        {1, 100, 5.0f},
+        {1, 101, 4.0f},
+        {2, 100, 4.0f},
+        {2, 101, 3.0f},
     };
     RatingsTable rt(raw);
     SimilarityMatrix sim(rt.num_users());
@@ -96,17 +95,15 @@ TEST_CASE("ItemKNN.predict: mean-centered weighted average mirrors the UBCF case
     // Item 101 (idx 1): users 1,2 -> 4,3; mean = 3.5
     // Item 102 (idx 2): user 1   -> 2;    mean = 2.0
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {2, 100, 4.0f},
-        {1, 101, 4.0f}, {2, 101, 3.0f},
-        {1, 102, 2.0f},
+        {1, 100, 5.0f}, {2, 100, 4.0f}, {1, 101, 4.0f}, {2, 101, 3.0f}, {1, 102, 2.0f},
     };
     RatingsTable rt(raw);
     REQUIRE(rt.num_users() == 2);
     REQUIRE(rt.num_items() == 3);
 
     SimilarityMatrix sim(3);
-    sim.set(2, 0, 1.0f);  // sim(item 102, item 100)
-    sim.set(2, 1, 1.0f);  // sim(item 102, item 101)
+    sim.set(2, 0, 1.0f); // sim(item 102, item 100)
+    sim.set(2, 1, 1.0f); // sim(item 102, item 101)
 
     ItemKNN model(rt, sim, /*k=*/2);
     // Predict user 2's rating for item 102:
@@ -119,12 +116,14 @@ TEST_CASE("ItemKNN.predict: mean-centered weighted average mirrors the UBCF case
 TEST_CASE("ItemKNN.predict: cold user (no ratings) returns item mean") {
     // Create 2 users; predict for a user with zero overlap.
     std::vector<Rating> raw = {
-        {1, 100, 5.0f}, {1, 101, 4.0f}, {1, 102, 3.0f},
-        {2, 999, 2.0f},  // user 2 only rated unrelated item 999
+        {1, 100, 5.0f},
+        {1, 101, 4.0f},
+        {1, 102, 3.0f},
+        {2, 999, 2.0f}, // user 2 only rated unrelated item 999
     };
     RatingsTable rt(raw);
     SimilarityMatrix sim(rt.num_items());
-    sim.set(0, 1, 1.0f);  // arbitrary, irrelevant
+    sim.set(0, 1, 1.0f); // arbitrary, irrelevant
     ItemKNN model(rt, sim, 5);
 
     // Predict user 2 (idx 1) for item 101 (idx 1):

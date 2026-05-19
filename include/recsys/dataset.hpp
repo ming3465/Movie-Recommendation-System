@@ -17,4 +17,4 @@ struct Rating {
 // Throws std::runtime_error on missing file or malformed line.
 std::vector<Rating> load_movielens_100k(const std::string& path);
 
-}  // namespace recsys
+} // namespace recsys

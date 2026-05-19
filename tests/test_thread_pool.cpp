@@ -27,10 +27,12 @@ TEST_CASE("ThreadPool: parallel_for visits every index exactly once") {
     constexpr std::size_t N = 10'000;
     std::vector<int> visits(N, 0);
     pool.parallel_for(N, [&visits](std::size_t b, std::size_t e) {
-        for (std::size_t i = b; i < e; ++i) visits[i] = 1;
+        for (std::size_t i = b; i < e; ++i)
+            visits[i] = 1;
     });
     long total = 0;
-    for (auto v : visits) total += v;
+    for (auto v : visits)
+        total += v;
     CHECK(total == static_cast<long>(N));
 }
 
@@ -40,7 +42,8 @@ TEST_CASE("ThreadPool: parallel sum matches closed-form expected value") {
     std::atomic<long long> sum{0};
     pool.parallel_for(N, [&sum](std::size_t b, std::size_t e) {
         long long local = 0;
-        for (std::size_t i = b; i < e; ++i) local += static_cast<long long>(i);
+        for (std::size_t i = b; i < e; ++i)
+            local += static_cast<long long>(i);
         sum += local;
     });
     const long long expected = static_cast<long long>(N) * (N - 1) / 2;
@@ -55,13 +58,12 @@ TEST_CASE("ThreadPool: exception in a task propagates through future.get()") {
 
 TEST_CASE("ThreadPool: exception in a parallel_for chunk is rethrown") {
     ThreadPool pool(4);
-    CHECK_THROWS_AS(
-        pool.parallel_for(
-            100,
-            [](std::size_t b, std::size_t /*e*/) {
-                if (b == 0) throw std::runtime_error("chunk-failure");
-            }),
-        std::runtime_error);
+    CHECK_THROWS_AS(pool.parallel_for(100,
+                                      [](std::size_t b, std::size_t /*e*/) {
+                                          if (b == 0)
+                                              throw std::runtime_error("chunk-failure");
+                                      }),
+                    std::runtime_error);
 }
 
 TEST_CASE("ThreadPool: destructor drains in-flight tasks before joining") {

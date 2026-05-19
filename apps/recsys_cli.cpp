@@ -28,35 +28,28 @@ int main(int argc, char** argv) {
     std::uint64_t seed = 42;
     std::size_t threads = 0;
 
-    app.add_option("--dataset", dataset_path,
-                   "Path to a MovieLens 100K u.data file")
-        ->required();
+    app.add_option("--dataset", dataset_path, "Path to a MovieLens 100K u.data file")->required();
     app.add_option("-k,--k", k, "Number of nearest neighbors")->default_val(30);
-    app.add_option("-s,--similarity", metric_str,
-                   "cosine | pearson | adjusted_cosine")
+    app.add_option("-s,--similarity", metric_str, "cosine | pearson | adjusted_cosine")
         ->default_val("cosine")
         ->check(CLI::IsMember({"cosine", "pearson", "adjusted_cosine"}));
-    app.add_option("-m,--mode", mode_str,
-                   "ubcf (user-based) | ibcf (item-based)")
+    app.add_option("-m,--mode", mode_str, "ubcf (user-based) | ibcf (item-based)")
         ->default_val("ubcf")
         ->check(CLI::IsMember({"ubcf", "ibcf"}));
     app.add_option("-o,--output", output_path,
                    "Write predictions CSV (user_id,item_id,actual,predicted)");
-    app.add_option("--test-fraction", test_fraction,
-                   "Held-out fraction of ratings")
+    app.add_option("--test-fraction", test_fraction, "Held-out fraction of ratings")
         ->default_val(0.2f);
-    app.add_option("--seed", seed, "RNG seed for the train/test split")
-        ->default_val(42);
-    app.add_option("--threads", threads,
-                   "Worker threads (0 = hardware concurrency)")
+    app.add_option("--seed", seed, "RNG seed for the train/test split")->default_val(42);
+    app.add_option("--threads", threads, "Worker threads (0 = hardware concurrency)")
         ->default_val(0);
 
     CLI11_PARSE(app, argc, argv);
 
-    const recsys::Metric metric =
-        (metric_str == "pearson") ? recsys::Metric::Pearson
-        : (metric_str == "adjusted_cosine") ? recsys::Metric::AdjustedCosine
-                                            : recsys::Metric::Cosine;
+    const recsys::Metric metric = (metric_str == "pearson") ? recsys::Metric::Pearson
+                                  : (metric_str == "adjusted_cosine")
+                                      ? recsys::Metric::AdjustedCosine
+                                      : recsys::Metric::Cosine;
     const bool ubcf = (mode_str == "ubcf");
 
     using clock = std::chrono::steady_clock;
@@ -66,26 +59,21 @@ int main(int argc, char** argv) {
     const auto ratings = recsys::load_movielens_100k(dataset_path);
     std::cout << "  " << ratings.size() << " ratings\n";
 
-    std::cout << "Splitting (test_fraction=" << test_fraction
-              << ", seed=" << seed << ")\n";
+    std::cout << "Splitting (test_fraction=" << test_fraction << ", seed=" << seed << ")\n";
     const auto split = recsys::train_test_split(ratings, test_fraction, seed);
-    std::cout << "  train=" << split.train.size()
-              << " test=" << split.test.size() << "\n";
+    std::cout << "  train=" << split.train.size() << " test=" << split.test.size() << "\n";
 
     std::cout << "Building rating table\n";
     const recsys::RatingsTable rt(split.train);
-    std::cout << "  users=" << rt.num_users()
-              << " items=" << rt.num_items() << "\n";
+    std::cout << "  users=" << rt.num_users() << " items=" << rt.num_items() << "\n";
 
     recsys::ThreadPool pool(threads);
-    std::cout << "Building " << (ubcf ? "user-user" : "item-item")
-              << " similarity matrix (" << metric_str << ") on "
-              << pool.size() << " threads\n";
+    std::cout << "Building " << (ubcf ? "user-user" : "item-item") << " similarity matrix ("
+              << metric_str << ") on " << pool.size() << " threads\n";
     const auto sim = ubcf ? recsys::build_user_similarity(rt, metric, pool)
                           : recsys::build_item_similarity(rt, metric, pool);
 
-    std::cout << "Predicting " << split.test.size() << " test ratings (k="
-              << k << ")\n";
+    std::cout << "Predicting " << split.test.size() << " test ratings (k=" << k << ")\n";
 
     std::ofstream out;
     if (!output_path.empty()) {
@@ -107,8 +95,7 @@ int main(int argc, char** argv) {
         sum_sq += err * err;
         ++scored;
         if (out) {
-            out << r.user_id << ',' << r.item_id << ',' << r.rating << ','
-                << p << '\n';
+            out << r.user_id << ',' << r.item_id << ',' << r.rating << ',' << p << '\n';
         }
     };
 
@@ -117,7 +104,8 @@ int main(int argc, char** argv) {
         for (const auto& r : split.test) {
             const auto u = rt.user_index(r.user_id);
             const auto i = rt.item_index(r.item_id);
-            if (u < 0 || i < 0) continue;  // unseen in training
+            if (u < 0 || i < 0)
+                continue; // unseen in training
             score_one(model.predict(u, i), r);
         }
     } else {
@@ -125,7 +113,8 @@ int main(int argc, char** argv) {
         for (const auto& r : split.test) {
             const auto u = rt.user_index(r.user_id);
             const auto i = rt.item_index(r.item_id);
-            if (u < 0 || i < 0) continue;
+            if (u < 0 || i < 0)
+                continue;
             score_one(model.predict(u, i), r);
         }
     }
@@ -133,8 +122,8 @@ int main(int argc, char** argv) {
     const auto t1 = clock::now();
     const double elapsed_s = std::chrono::duration<double>(t1 - t0).count();
 
-    std::cout << "Scored " << scored << "/" << split.test.size()
-              << " test ratings in " << elapsed_s << "s\n";
+    std::cout << "Scored " << scored << "/" << split.test.size() << " test ratings in " << elapsed_s
+              << "s\n";
     if (scored > 0) {
         const double mae = sum_abs / static_cast<double>(scored);
         const double rmse = std::sqrt(sum_sq / static_cast<double>(scored));

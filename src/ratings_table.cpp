@@ -7,8 +7,8 @@ namespace recsys {
 
 namespace {
 
-std::unordered_map<std::int32_t, std::int32_t> compact_ids(
-    const std::vector<Rating>& ratings, bool is_user) {
+std::unordered_map<std::int32_t, std::int32_t> compact_ids(const std::vector<Rating>& ratings,
+                                                           bool is_user) {
     std::unordered_map<std::int32_t, std::int32_t> map;
     map.reserve(ratings.size());
     for (const auto& r : ratings) {
@@ -20,7 +20,7 @@ std::unordered_map<std::int32_t, std::int32_t> compact_ids(
     return map;
 }
 
-}  // namespace
+} // namespace
 
 RatingsTable::RatingsTable(const std::vector<Rating>& ratings) {
     user_ext_to_int_ = compact_ids(ratings, /*is_user=*/true);
@@ -77,24 +77,29 @@ RatingsTable::RatingsTable(const std::vector<Rating>& ratings) {
     for (std::size_t u = 0; u < n_users; ++u) {
         const auto first = user_off_[u];
         const auto last = user_off_[u + 1];
-        if (first == last) continue;
+        if (first == last)
+            continue;
         float sum = 0.0f;
-        for (auto p = first; p < last; ++p) sum += user_values_[p];
+        for (auto p = first; p < last; ++p)
+            sum += user_values_[p];
         user_means_[u] = sum / static_cast<float>(last - first);
     }
     item_means_.assign(n_items, 0.0f);
     for (std::size_t i = 0; i < n_items; ++i) {
         const auto first = item_off_[i];
         const auto last = item_off_[i + 1];
-        if (first == last) continue;
+        if (first == last)
+            continue;
         float sum = 0.0f;
-        for (auto p = first; p < last; ++p) sum += item_values_[p];
+        for (auto p = first; p < last; ++p)
+            sum += item_values_[p];
         item_means_[i] = sum / static_cast<float>(last - first);
     }
 
     if (!ratings.empty()) {
         double sum = 0.0;
-        for (const auto& r : ratings) sum += r.rating;
+        for (const auto& r : ratings)
+            sum += r.rating;
         global_mean_ = static_cast<float>(sum / static_cast<double>(n));
     }
 }
@@ -129,8 +134,7 @@ RatingsTable::ItemSlice RatingsTable::ratings_by_item(std::int32_t item_idx) con
     return {item_users_.data() + first, item_values_.data() + first, last - first};
 }
 
-Split train_test_split(const std::vector<Rating>& ratings,
-                       float test_fraction,
+Split train_test_split(const std::vector<Rating>& ratings, float test_fraction,
                        std::uint64_t seed) {
     if (test_fraction < 0.0f || test_fraction > 1.0f) {
         throw std::invalid_argument("test_fraction must be in [0, 1]");
@@ -152,4 +156,4 @@ Split train_test_split(const std::vector<Rating>& ratings,
     return out;
 }
 
-}  // namespace recsys
+} // namespace recsys

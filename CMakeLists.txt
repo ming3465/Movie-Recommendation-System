@@ -45,6 +45,7 @@ add_library(recsys STATIC
     src/ratings_table.cpp
     src/thread_pool.cpp
     src/similarity.cpp
+    src/similarity_matrix.cpp
 )
 target_compile_features(recsys PUBLIC cxx_std_17)
 target_include_directories(recsys PUBLIC
@@ -96,3 +97,4 @@ endfunction()
 recsys_add_test(test_ratings_table tests/test_ratings_table.cpp)
 recsys_add_test(test_thread_pool tests/test_thread_pool.cpp)
 recsys_add_test(test_similarity tests/test_similarity.cpp)
+recsys_add_test(test_similarity_matrix tests/test_similarity_matrix.cpp)

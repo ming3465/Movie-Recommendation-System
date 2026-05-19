@@ -48,6 +48,8 @@ public:
     float item_mean(std::int32_t item_idx) const noexcept {
         return item_means_[static_cast<std::size_t>(item_idx)];
     }
+    const float* user_means_data() const noexcept { return user_means_.data(); }
+    const float* item_means_data() const noexcept { return item_means_.data(); }
     float global_mean() const noexcept { return global_mean_; }
 
 private:

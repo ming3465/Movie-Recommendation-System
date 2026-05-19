@@ -14,6 +14,12 @@ struct SparseVector {
     std::size_t count;
 };
 
+enum class Metric {
+    Cosine,
+    Pearson,
+    AdjustedCosine,
+};
+
 namespace similarity {
 
 // Cosine similarity in [-1, 1]. Returns 0 if either vector is empty or has
